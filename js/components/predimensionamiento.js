@@ -510,11 +510,6 @@ function initPredimensionamientoModule() {
                                 <span x-show="!isCalculating">Calcular</span>
                                 <span x-show="isCalculating">Calculando...</span>
                             </button>
-                            <button 
-                                id="calculate-button" 
-                                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50" 
-                                x-on:click="resetCalculationState()"> resetear
-                            </button>
 
                             <div x-show="resultados && Object.keys(resultados).length > 0" class="flex items-center text-green-600">
                                 <i class="fas fa-check-circle mr-2"></i>
