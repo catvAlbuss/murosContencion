@@ -167,11 +167,64 @@ function initVerificacionesModule() {
 
         init() {
             //console.log('Inicializando verificacionesModule...');
+            this.loadSavedData();
             this.configurarEventos();
             this.createTableCombinacionCargas();
             this.createTableEstabilidadVolteo();
             this.createTableEstabilidadDeslizamiento();
             this.createTablePresionesAdmisibles();
+        },
+
+        loadSavedData() {
+            const systemData = this.getSystemData();
+            if (systemData) {
+                // Cargar datos de predimensionamiento (si es que cargas los necesita directamente)
+                if (systemData.predimensionamiento && systemData.predimensionamiento.isCalculated) {
+                    this.predimData = {
+                        inputValues: systemData.predimensionamiento.inputValues || {},
+                        resultados: systemData.predimensionamiento.resultados || {}
+                    };
+                    console.log('📊 Datos de predimensionamiento cargados en cargasModule (desde savedData).');
+                }
+
+                // AHORA CARGAMOS LOS DATOS DE DIMENSIONAMIENTO
+                if (systemData.dimensionamiento && systemData.dimensionamiento.isCalculated) {
+                    this.dimensionamientoData = {
+                        inputValues: systemData.dimensionamiento.inputValues || {},
+                        resultados: systemData.dimensionamiento.resultados || {},
+                        isCalculated: systemData.dimensionamiento.isCalculated,
+                        errors: systemData.dimensionamiento.errors || []
+                    };
+                    console.log('📊 Datos de dimensionamiento cargados en cargasModule (desde savedData).');
+                    // Al cargar datos guardados, recalculamos por si dependen de dimensionamiento
+                    //this.calcularResultados();
+                } else if (systemData.dimensionamiento) {
+                    // Si dimensionamiento existe pero no está calculado, aún podemos guardar sus inputValues si son relevantes
+                    this.dimensionamientoData = {
+                        inputValues: systemData.dimensionamiento.inputValues || {},
+                        resultados: {}, // Vacío si no calculado
+                        isCalculated: false,
+                        errors: systemData.dimensionamiento.errors || []
+                    };
+                }
+
+                // Opcional: cargar resultados propios de 'cargas' si se guardaron en 'systemData.cargas'
+                if (systemData.cargas) {
+                    this.resultados = systemData.cargas.resultados || {};
+                    this.errors = systemData.cargas.errors || [];
+                    console.log('📊 Datos de cargas cargados (desde savedData).');
+                }
+            }
+        },
+
+        getSystemData() {
+            try {
+                const storedData = localStorage.getItem('murosContencionData');
+                return storedData ? JSON.parse(storedData) : null;
+            } catch (error) {
+                console.error('Error cargando datos del sistema:', error);
+                return null;
+            }
         },
 
         configurarEventos() {
@@ -441,7 +494,7 @@ function initVerificacionesModule() {
             for (let i = 171; i <= 185; i++) {
                 sumaPesos += this.datosCalculados[`C${i}`] || 0;
             }
-            
+
             this.datosCalculados.C186 = this.formatearValor(sumaPesos);
 
             // G186: Suma de momentos desde la fila 6 hasta la fila 12 (G177 a G183)
@@ -459,153 +512,6 @@ function initVerificacionesModule() {
             //console.log(sumaFriccion);
             this.datosCalculados.C187 = this.formatearValor(sumaFriccion);
         },
-        // calcularComponentes() {
-        //     // Initialize calculated data
-        //     // Common calculations for shared values
-        //     const gv = this.getValue('graficoverificacion');
-        //     const materiales = this.getValue('materiales');
-        //     const geometria = this.getValue('geometria');
-        //     const cargas = this.getValue('cargas');
-        //     const c96 = gv?.C96 ?? '';
-        //     const commonValues = {
-        //         B90: gv?.B90 ?? 0,
-        //         //F172: this.getValue('graficoverificacion.A89') + this.getValue('graficoverificacion.B88'),
-        //         F172: (gv?.A89 ?? 0) + (gv?.B88 ?? 0),
-        //         E173: this.getValue('B119') / 2,
-        //         F177: (gv?.C74 ?? 0) / 2 + (gv?.A83 ?? 0) + (gv?.A89 ?? 0),
-        //         F178: (gv?.D89 ?? 0) / 2 + (gv?.B88 ?? 0) + (gv?.A89 ?? 0),
-        //         C178: (cargas?.B25 ?? 0) * (gv?.D89 ?? 0),
-
-        //         //--
-        //         B179: (gv?.D89 ?? 0) * (gv?.E74 ?? 0),
-        //         F179: 2 * (gv?.D89 ?? 0) / 3 + (gv?.A89 ?? 0) + (gv?.B88 ?? 0),
-        //         //--
-        //         B180: (gv?.D89 ?? 0) * (gv?.E79 ?? 0),
-        //         C180: (gv?.D89 ?? 0) * (gv?.E79 ?? 0) * (materiales?.B11 ?? 0),
-        //         F180: (gv?.D89 ?? 0) / 2 + (gv?.B88 ?? 0) + (gv?.A89 ?? 0),
-        //         G180: ((gv?.D89 ?? 0) * (gv?.E79 ?? 0) * (materiales?.B11 ?? 0)) * ((gv?.D89 ?? 0) / 2 + (gv?.B88 ?? 0) + (gv?.A89 ?? 0)),
-        //         H180: ((gv?.D89 ?? 0) * (gv?.E79 ?? 0) * (materiales?.B11 ?? 0)) * (materiales?.B14 ?? 0),
-
-        //         //--
-        //         B181: (gv?.B90 ?? 0) * (gv?.F86 ?? 0),
-        //         C181: ((gv?.B90 ?? 0) * (gv?.F86 ?? 0)) * (materiales?.B6 ?? 0),
-        //         F181: (gv?.B90 ?? 0) / 2,
-        //         G181: (((gv?.B90 ?? 0) * (gv?.F86 ?? 0)) * (materiales?.B6 ?? 0)) * ((gv?.B90 ?? 0) / 2),
-        //         H181: (((gv?.B90 ?? 0) * (gv?.F86 ?? 0)) * (materiales?.B6 ?? 0)) * (materiales?.B14 ?? 0),
-        //         //--
-        //         B182: (gv?.A83 ?? 0) * (gv?.E79 ?? 0) * 0.5,
-        //         C182: ((gv?.A83 ?? 0) * (gv?.E79 ?? 0) * 0.5) * (materiales?.B6 ?? 0),
-        //         F182: 2 * (gv?.A83 ?? 0) / 3 + (gv?.A89 ?? 0),
-        //         G182: (((gv?.A83 ?? 0) * (gv?.E79 ?? 0) * 0.5) * (materiales?.B6 ?? 0)) * (2 * (gv?.A83 ?? 0) / 3 + (gv?.A89 ?? 0)),
-        //         H182: (((gv?.A83 ?? 0) * (gv?.E79 ?? 0) * 0.5) * (materiales?.B6 ?? 0)) * (materiales?.B14 ?? 0),
-        //         //--
-        //         B183: (gv?.C74 ?? 0) * (gv?.E79 ?? 0),
-        //         C183: ((gv?.C74 ?? 0) * (gv?.E79 ?? 0)) * (materiales?.B6 ?? 0),
-        //         F183: (gv?.C74 ?? 0) / 2 + (gv?.A83 ?? 0) + (gv?.A89 ?? 0),
-        //         G183: (((gv?.C74 ?? 0) * (gv?.E79 ?? 0)) * (materiales?.B6 ?? 0)) * ((gv?.C74 ?? 0) / 2 + (gv?.A83 ?? 0) + (gv?.A89 ?? 0)),
-        //         H183: ((gv?.F95 ?? 0) + (gv?.F91 ?? 0)) * (gv?.G94 ?? 0) / 2,
-        //         //--
-        //         B184: ((gv?.F95 ?? 0) + (gv?.F91 ?? 0)) * (gv?.G94 ?? 0) / 2,
-        //         C184: (((gv?.F95 ?? 0) + (gv?.F91 ?? 0)) * (gv?.G94 ?? 0) / 2) * (materiales?.B6 ?? 0),
-        //         F184: (gv?.C92 ?? 0),
-        //         G184: ((((gv?.F95 ?? 0) + (gv?.F91 ?? 0)) * (gv?.G94 ?? 0) / 2) * (materiales?.B6 ?? 0)) * (gv?.C92 ?? 0),
-        //         H184: ((((gv?.F95 ?? 0) + (gv?.F91 ?? 0)) * (gv?.G94 ?? 0) / 2) * (materiales?.B6 ?? 0)) * (materiales?.B14 ?? 0),
-        //         //--
-        //         H185: ((gv?.C96 ?? '') === "SI") ? ((materiales?.B13 ?? 0) * (gv?.B90 ?? 0)) : 0,
-        //         //--
-        //     };
-
-        //     // Component-specific calculations
-        //     const calculations = [
-        //         {
-        //             areaKey: 'B171', area: 0.00, peso: 0, fx: this.getValue('C160'), brazoY: this.getValue('C162'), brazoX: 0,
-        //             momento: () => this.datosCalculados.D171 * this.datosCalculados.E171, friccion: () => this.datosCalculados.D171,
-        //         },
-        //         {
-        //             areaKey: 'B172', area: 0.00, peso: this.getValue('B124'), fx: this.getValue('B125'), brazoY: this.getValue('E172'), brazoX: commonValues.F172,
-        //             momento: () => this.datosCalculados.E172 * this.datosCalculados.D172 - this.datosCalculados.C172 * this.datosCalculados.F172,
-        //             friccion: () => this.datosCalculados.D172,
-        //         },
-        //         {
-        //             areaKey: 'B173', area: 0.00, peso: this.getValue('B129'), fx: this.getValue('B130'), brazoY: commonValues.E173, brazoX: commonValues.F172,
-        //             momento: () => this.datosCalculados.E173 * this.datosCalculados.D173 - this.datosCalculados.C173 * this.datosCalculados.F173,
-        //             friccion: () => this.datosCalculados.D173,
-        //         },
-        //         {
-        //             areaKey: 'B174', area: 0.00, peso: this.getValue('B137'), fx: this.getValue('B138'), brazoY: commonValues.E173, brazoX: commonValues.F172,
-        //             momento: () => this.datosCalculados.E174 * this.datosCalculados.D174 - this.datosCalculados.C174 * this.datosCalculados.F174,
-        //             friccion: () => this.datosCalculados.D174,
-        //         },
-        //         {
-        //             areaKey: 'B175', area: 0.00, peso: 0.00, fx: this.getValue('B110'), brazoY: this.getValue('E175'), brazoX: 0.00,
-        //             momento: () => this.datosCalculados.D175 * this.datosCalculados.E175, friccion: () => this.datosCalculados.D175,
-        //         },
-        //         {
-        //             areaKey: 'B176', area: 0.00, peso: 0.00, fx: this.getValue('B115'), brazoY: this.getValue('E175'), brazoX: 0.00,
-        //             momento: () => this.datosCalculados.D176 * this.datosCalculados.E176, friccion: () => this.datosCalculados.D176,
-        //         },
-        //         {
-        //             areaKey: 'B177', area: 0.00, peso: 0.00, fx: 0.00, brazoY: 0.00,
-        //             brazoX: () => commonValues.F177,
-        //             momento: () => 0 * commonValues.F177,
-        //             friccion: () => 0 * (materiales?.B14 ?? 0),
-        //         },
-        //         {
-        //             areaKey: 'B178', area: 0,
-        //             peso: () => commonValues.C178, fx: 0.00, brazoY: 0.00,
-        //             brazoX: () => commonValues.F178,
-        //             momento: () => commonValues.C178 * commonValues.F178,
-        //             friccion: () => commonValues.C178 * (materiales?.B14 ?? 0)
-        //         },
-        //         {
-        //             areaKey: 'B179',
-        //             area: () => commonValues.B179,
-        //             peso: () => commonValues.B179 * (materiales?.B11 ?? 0),
-        //             fx: 0.00, brazoY: 0.00,
-        //             brazoX: () => commonValues.F179,
-        //             momento: () => commonValues.B179 * (materiales?.B11 ?? 0) * commonValues.F179,
-        //             friccion: () => (commonValues.B179 * (materiales?.B11 ?? 0)) * (materiales?.B14 ?? 0)
-        //         },
-        //         { areaKey: 'B180', area: () => commonValues.B180, peso: () => commonValues.C180, fx: 0.00, brazoY: 0.00, brazoX: () => commonValues.F180, momento: () => commonValues.G180, friccion: () => commonValues.H180 },
-        //         { areaKey: 'B181', area: () => commonValues.B181, peso: () => commonValues.C181, fx: 0.00, brazoY: 0.00, brazoX: () => commonValues.F181, momento: () => commonValues.G181, friccion: () => commonValues.H181 },
-        //         { areaKey: 'B182', area: () => commonValues.B182, peso: () => commonValues.C182, fx: 0.00, brazoY: 0.00, brazoX: () => commonValues.F182, momento: () => commonValues.G182, friccion: () => commonValues.H182 },
-        //         { areaKey: 'B183', area: () => commonValues.B183, peso: () => commonValues.C183, fx: 0.00, brazoY: 0.00, brazoX: () => commonValues.F183, momento: () => commonValues.G183, friccion: () => commonValues.H183 },
-        //         { areaKey: 'B184', area: () => commonValues.B184, peso: () => commonValues.C184, fx: 0.00, brazoY: 0.00, brazoX: () => commonValues.F184, momento: () => commonValues.G184, friccion: () => commonValues.H184 },
-        //         { areaKey: 'B185', area: 0.00, peso: 0.00, fx: 0.00, brazoY: 0.00, brazoX: 0.00, momento: () => 0.00, friccion: () => commonValues.H185 },
-        //     ];
-
-        //     const resolve = val => (typeof val === 'function' ? val() : val);
-
-        //     // Primera pasada: cargar valores base (área, peso, fx, brazoY, brazoX)
-        //     calculations.forEach(calc => {
-        //         const id = calc.areaKey.slice(1);
-
-        //         this.datosCalculados[calc.areaKey] = resolve(calc.area);
-        //         this.datosCalculados[calc.pesoKey || `C${id}`] = resolve(calc.peso); // <- corregido
-        //         this.datosCalculados[calc.fxKey || `D${id}`] = calc.fx;
-        //         this.datosCalculados[calc.brazoYKey || `E${id}`] = calc.brazoY;
-        //         this.datosCalculados[calc.brazoXKey || `F${id}`] = typeof calc.brazoX === 'function' ? calc.brazoX() : calc.brazoX;
-        //     });
-
-        //     // Segunda pasada: evaluar momento y fricción cuando datos ya están cargados
-        //     calculations.forEach(calc => {
-        //         const id = calc.areaKey.slice(1);
-
-        //         this.datosCalculados[calc.momentoKey || `G${id}`] =
-        //             typeof calc.momento === 'function' ? calc.momento() : calc.momento;
-
-        //         this.datosCalculados[calc.friccionKey || `H${id}`] =
-        //             typeof calc.friccion === 'function' ? calc.friccion() : calc.friccion;
-        //     });
-
-        //     // Sort combinacionestable by momento in descending order
-        //     this.combinacionestable.sort((a, b) => {
-        //         const momentoA = this.datosCalculados[a.momentoKey] || 0;
-        //         const momentoB = this.datosCalculados[b.momentoKey] || 0;
-        //         return momentoB - momentoA;
-        //     });
-        //     this.createTableEstabilidadVolteo();
-        // },
 
         getBaseColumns() {
             return [

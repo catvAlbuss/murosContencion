@@ -149,24 +149,20 @@ function initCargasModule() {
                         
                         <style>
                             .measurement-input {
-                                background: rgba(0, 0, 0, 0.8);
-                                border: 1px solid #ccc;
                                 padding: 4px 8px;
                                 font-size: 12px;
                                 width: 80px;
                                 border-radius: 4px;
                                 transition: all 0.3s ease;
-                                color: aliceblue;
+                                color: rgba(27, 27, 27, 0.8);
                             }
                             .measurement-input-result {
-                                background: rgba(253, 14, 14, 0.8);
-                                border: 1px solid #ccc;
                                 padding: 4px 8px;
                                 font-size: 12px;
                                 width: 80px;
                                 border-radius: 4px;
                                 transition: all 0.3s ease;
-                                color: aliceblue;
+                                color: rgba(27, 27, 27, 0.8);
                             }
 
                             .measurement-input:focus {
@@ -274,23 +270,22 @@ function initCargasModule() {
         showEmpujeSobrecarga: false,
         showTablaDetallada: false,
 
-        // Datos recibidos
-        predimData: null,
-        resultados: {},
+        // Datos recibidos de otros módulos
+        // Ahora 'dimensionamientoData' almacenará los datos completos del módulo dimensionamiento
+        predimData: null,          // Datos de predimensionamiento (todavía relevantes si los usa cargas)
+        dimensionamientoData: null, // NUEVO: Para almacenar los datos de dimensionamiento
+        resultados: {},            // Resultados propios del módulo de cargas
         errors: [],
 
         // Control de cambios
         lastInputHash: '',
 
-        // Configuración de parámetros a mostrar
+        // Configuración de parámetros a mostrar (se mantiene igual)
         parametrosBase: [
             { key: 'B98', label: 'Altura de sobrecarga', symbol: 'hs', unit: 'm' },
             { key: 'B99', label: 'Coeficiente activo', symbol: 'ka', unit: '-' },
             { key: 'B100', label: 'Coeficiente pasivo', symbol: 'kp', unit: '-' },
             { key: 'B101', label: 'Coeficiente reposo', symbol: 'ko', unit: '-' },
-            // { key: 'B112', label: 'Cohesión equivalente', symbol: 'c_eq', unit: 'kN/m²' },
-            // { key: 'E74', label: 'Desplazamiento talud', symbol: 'Δ', unit: 'm' },
-            // { key: 'E79', label: 'Altura efectiva', symbol: 'H_eff', unit: 'm' }
         ],
 
         empujePasivoParams: [
@@ -302,7 +297,6 @@ function initCargasModule() {
             { key: 'B108', label: 'Empuje del terreno', symbol: 'P', unit: '' },
             { key: 'B109', label: 'Empuje vertical del terreno', symbol: 'Pv', unit: '' },
             { key: 'B110', label: 'Empuje horizaontal del terreno', symbol: 'Ph', unit: '' },
-
             { key: 'B112', label: '', symbol: 'Smax', unit: '' },
             { key: 'B113', label: '', symbol: 'P', unit: '' },
             { key: 'B114', label: '', symbol: 'Pv', unit: '' },
@@ -317,7 +311,6 @@ function initCargasModule() {
             { key: 'B123', label: 'Empuje del terreno', symbol: 'P', unit: '' },
             { key: 'B124', label: 'empuje vertical del terreno', symbol: 'Pv', unit: '' },
             { key: 'B125', label: 'empuje horizaontal del terreno', symbol: 'Ph', unit: '' },
-
             { key: 'B127', label: '', symbol: 'Smax', unit: '' },
             { key: 'B128', label: '', symbol: 'P', unit: '' },
             { key: 'B129', label: '', symbol: 'Pv', unit: '' },
@@ -336,7 +329,6 @@ function initCargasModule() {
         cargaSismicos: [
             { key: 'C144', label: '', symbol: 'Kh', unit: '' },
             { key: 'C145', label: '', symbol: 'Kh', unit: '' },
-
             { key: 'C153', label: '', symbol: 'Kae', unit: '' },
             { key: 'B154', label: '', symbol: 'gs', unit: '' },
             { key: 'B155', label: '', symbol: 'H', unit: '' },
@@ -351,99 +343,150 @@ function initCargasModule() {
 
         get cargasisicatable() {
             return [
-                {
-                    label: 'Θ=',
-                    gradosKey: 'B147',
-                    radianesKey: 'C147',
-                    description: ''
-                },
-                {
-                    label: 'Ø=',
-                    gradosKey: 'B148',
-                    radianesKey: 'C148',
-                    description: 'SUELO'
-                },
-                {
-                    label: 'BETA',
-                    gradosKey: 'B149',
-                    radianesKey: 'C149',
-                    description: 'ANGULO VASTAGO'
-                },
-                {
-                    label: 'd=',
-                    gradosKey: 'B150',
-                    radianesKey: 'C150',
-                    description: 'ANGULO DE FRICCION'
-                },
-                {
-                    label: 'I=',
-                    gradosKey: 'B151',
-                    radianesKey: 'C151',
-                    description: 'ANGULO DEL TALUD'
-                },
-                {
-                    label: 'y=',
-                    gradosKey: 'B152',
-                    radianesKey: '',
-                    description: ''
-                }
+                { label: 'Θ=', gradosKey: 'B147', radianesKey: 'C147', description: '' },
+                { label: 'Ø=', gradosKey: 'B148', radianesKey: 'C148', description: 'SUELO' },
+                { label: 'BETA', gradosKey: 'B149', radianesKey: 'C149', description: 'ANGULO VASTAGO' },
+                { label: 'd=', gradosKey: 'B150', radianesKey: 'C150', description: 'ANGULO DE FRICCION' },
+                { label: 'I=', gradosKey: 'B151', radianesKey: 'C151', description: 'ANGULO DEL TALUD' },
+                { label: 'y=', gradosKey: 'B152', radianesKey: '', description: '' }
             ];
         },
 
+        // Refactorizado para ser más conciso y claro en el orden de búsqueda
         getValue(key) {
-            if (this.resultados[key] !== undefined) return this.resultados[key];
-            if (this.predimData?.resultados?.[key] !== undefined) return this.predimData.resultados[key];
+            // 1. Buscar en resultados propios del módulo de cargas
+            if (this.resultados[key] !== undefined) {
+                return this.resultados[key];
+            }
+            // 2. Buscar en resultados del módulo de dimensionamiento
+            if (this.dimensionamientoData?.resultados?.[key] !== undefined) {
+                return this.dimensionamientoData.resultados[key];
+            }
+            // 3. Buscar en resultados del módulo de predimensionamiento
+            if (this.predimData?.resultados?.[key] !== undefined) {
+                return this.predimData.resultados[key];
+            }
             return null;
         },
 
         init() {
-            //console.log('Módulo de Cargas de Empuje inicializado');
+            this.loadSavedData();
             this.configurarEventos();
             this.inicializarValoresDefecto();
         },
 
+        loadSavedData() {
+            const systemData = this.getSystemData();
+            console.log(systemData);
+            if (systemData) {
+                // Cargar datos de predimensionamiento (si es que cargas los necesita directamente)
+                if (systemData.predimensionamiento && systemData.predimensionamiento.isCalculated) {
+                    this.predimData = {
+                        inputValues: systemData.predimensionamiento.inputValues || {},
+                        resultados: systemData.predimensionamiento.resultados || {}
+                    };
+                    console.log('📊 Datos de predimensionamiento cargados en cargasModule (desde savedData).');
+                }
+
+                // AHORA CARGAMOS LOS DATOS DE DIMENSIONAMIENTO
+                if (systemData.dimensionamiento && systemData.dimensionamiento.isCalculated) {
+                    this.dimensionamientoData = {
+                        inputValues: systemData.dimensionamiento.inputValues || {},
+                        resultados: systemData.dimensionamiento.resultados || {},
+                        isCalculated: systemData.dimensionamiento.isCalculated,
+                        errors: systemData.dimensionamiento.errors || []
+                    };
+                    console.log('📊 Datos de dimensionamiento cargados en cargasModule (desde savedData).');
+                    // Al cargar datos guardados, recalculamos por si dependen de dimensionamiento
+                    this.calcularResultados();
+                } else if (systemData.dimensionamiento) {
+                    // Si dimensionamiento existe pero no está calculado, aún podemos guardar sus inputValues si son relevantes
+                    this.dimensionamientoData = {
+                        inputValues: systemData.dimensionamiento.inputValues || {},
+                        resultados: {}, // Vacío si no calculado
+                        isCalculated: false,
+                        errors: systemData.dimensionamiento.errors || []
+                    };
+                }
+
+                // Opcional: cargar resultados propios de 'cargas' si se guardaron en 'systemData.cargas'
+                if (systemData.cargas) {
+                    this.resultados = systemData.cargas.resultados || {};
+                    this.errors = systemData.cargas.errors || [];
+                    console.log('📊 Datos de cargas cargados (desde savedData).');
+                }
+            }
+        },
+
+        getSystemData() {
+            try {
+                const storedData = localStorage.getItem('murosContencionData');
+                return storedData ? JSON.parse(storedData) : null;
+            } catch (error) {
+                console.error('Error cargando datos del sistema:', error);
+                return null;
+            }
+        },
+
         configurarEventos() {
-            // Escucha cambios del módulo de dimensionamiento
+            // Escucha el evento 'dimensionamiento-updated' para reaccionar a cambios
             document.addEventListener('dimensionamiento-updated', (event) => {
+                console.log('✅ Evento "dimensionamiento-updated" recibido en cargasModule.', event.detail);
                 this.procesarDatosDimensionamiento(event.detail);
             });
 
-            // Escucha sus propios cambios para reactividad
+            // Escucha sus propios cambios para reactividad interna o para persistencia/debug
             document.addEventListener('cargas-updated', (event) => {
                 if (event.detail && event.detail.resultados) {
+                    // Actualiza los resultados internos si 'cargas' se actualiza a sí mismo (ej. desde un input)
                     this.resultados = { ...event.detail.resultados };
+                    // Opcional: si 'cargas' también tiene inputs, actualizaría 'inputValues' aquí
                 }
             });
         },
 
         procesarDatosDimensionamiento(eventData) {
+            console.log('⚙️ Procesando datos de dimensionamiento en cargasModule...');
             try {
-                if (!eventData) {
-                    console.warn('No se recibieron datos del dimensionamiento');
+                // Asegúrate de que eventData.detail contenga la estructura esperada del módulo 'dimensionamiento'
+                if (!eventData || !eventData.resultados || !eventData.inputValues) {
+                    console.warn('Datos de dimensionamiento incompletos o inválidos recibidos.', eventData);
+                    this.addError('datos_dimensionamiento_invalidos', 'Datos de dimensionamiento incompletos.');
+                    this.dimensionamientoData = null; // Limpiar datos si son inválidos
                     return;
                 }
 
-                // Inicialización segura de objetos
-                this.predimData = {
+                // Almacenar los datos completos del módulo de dimensionamiento
+                this.dimensionamientoData = {
                     inputValues: eventData.inputValues || {},
                     resultados: eventData.resultados || {},
+                    isCalculated: eventData.isCalculated || false,
                     errors: Array.isArray(eventData.errors) ? eventData.errors : []
                 };
 
-                //console.log('Datos recibidos del dimensionamiento:', this.predimData);
-                //console.log('Valor B98:', this.getB98Value());
+                // Aquí puedes también actualizar predimData si el evento de dimensionamiento lo trae
+                // y si cargas aún lo necesita separadamente.
+                if (eventData.predimData) {
+                    this.predimData = {
+                        inputValues: eventData.predimData.inputValues || {},
+                        resultados: eventData.predimData.resultados || {},
+                        errors: Array.isArray(eventData.predimData.errors) ? eventData.predimData.errors : []
+                    };
+                }
 
+                console.log('✅ Datos de dimensionamiento actualizados en cargasModule.');
+                // Recalcular los resultados de cargas cuando se actualiza dimensionamiento
                 this.calcularResultados();
             } catch (error) {
-                console.error('Error procesando datos del dimensionamiento:', error);
-                this.addError('procesamiento_datos', 'Error procesando datos del dimensionamiento: ' + error.message);
+                console.error('Error al procesar datos de dimensionamiento en cargasModule:', error);
+                this.addError('procesamiento_datos_dimensionamiento', 'Error procesando datos de dimensionamiento: ' + error.message);
             }
         },
 
         inicializarValoresDefecto() {
-            // Valores por defecto para testing
+            // Valores por defecto para testing o inicialización si no hay datos guardados
+            // Solo para resultados propios de Cargas, no para datos recibidos
             this.resultados = {
-
                 // Empuje activo
                 empuje_activo_terreno: 87.5,
                 empuje_activo_vertical: 15.2,
@@ -460,7 +503,7 @@ function initCargasModule() {
                 presion_sobrecarga_max: 8.2,
                 brazo_empuje_sobrecarga: 2.0,
 
-                // Totales
+                // Totales (estos se recalcularán en calcularEmpujes)
                 empuje_pasivo_total: 749.5,
                 empuje_activo_total: 87.5,
                 empuje_sobrecarga_total: 32.1,
@@ -469,136 +512,154 @@ function initCargasModule() {
         },
 
         calcularResultados() {
-            try {
-                this.clearErrors();
+            console.log('⚙️ Iniciando cálculo de resultados en cargasModule...');
+            this.clearErrors();
 
-                // Verificar que tenemos datos del predimensionamiento
-                if (!this.predimData || !this.predimData.resultados) {
-                    this.addError('datos_faltantes', 'No se han recibido datos del módulo de predimensionamiento');
-                    return;
-                }
+            // 1. Validar que tenemos datos de dimensionamiento (que a su vez contiene predimensionamiento)
+            if (!this.dimensionamientoData || !this.dimensionamientoData.isCalculated) {
+                this.addError('dimensionamiento_no_calculado', 'El módulo de dimensionamiento no ha sido calculado o sus datos no son válidos.');
+                console.warn('❌ Cálculo de cargas abortado: dimensionamiento no disponible o no calculado.');
+                return;
+            }
 
-                // Obtener B98 del predimensionamiento
-                const b98 = this.getB98Value();
-                if (!b98 || b98 === 0) {
-                    this.addError('b98_invalido', 'El valor B98 (altura de sobrecarga) no es válido');
-                }
+            // 2. Obtener el valor B98 (ahora con tu mejorado `getValue`)
+            const b98 = this.getValue('B98'); // Esto buscará en resultados de cargas, luego dimensionamiento, luego predim
 
-                // Aquí irían los cálculos específicos usando B98 y otros parámetros
-                this.calcularEmpujes();
-                this.sendDataCargas();
+            if (b98 === null || typeof b98 !== 'number' || isNaN(b98) || b98 <= 0) {
+                this.addError('b98_invalido', 'El valor B98 (altura de sobrecarga) es inválido o no se encontró. Es un dato crítico.');
+                console.error('❌ Cálculo de cargas abortado: B98 inválido.');
+                return;
+            }
 
-            } catch (error) {
-                this.addError('calculo_general', 'Error en el cálculo: ' + error.message);
-                console.error('Error en cálculo de cargas:', error);
+            console.log(`✅ B98 (${b98}) obtenido correctamente para el cálculo de cargas.`);
+
+            // 3. Realizar los cálculos específicos de empujes
+            this.calcularEmpujes();
+
+            // 4. Propagar los resultados de cargas para que otros módulos los puedan consumir
+            this.sendDataCargas();
+
+            if (!this.hasErrors) {
+                console.log('✅ Cálculos de cargas completados sin errores.');
+            } else {
+                console.warn('⚠️ Cálculos de cargas completados con errores.');
             }
         },
 
         calcularEmpujes() {
             try {
-                const b98 = parseFloat(this.getB98Value());
+                const b98 = parseFloat(this.getValue('B98')); // Usamos getValue
+                const ka = parseFloat(this.getValue('B99')); // Ejemplo: Coeficiente activo
+                const kp = parseFloat(this.getValue('B100')); // Ejemplo: Coeficiente pasivo
+                const gammaSuelo = parseFloat(this.getValue('gs')); // Ejemplo: Peso específico del suelo (asumiendo que 'gs' viene de predim o dim)
+                const H = parseFloat(this.getValue('H')); // Ejemplo: Altura del muro (asumiendo que 'H' viene de predim o dim)
 
-                if (isNaN(b98) || b98 <= 0) {
-                    //console.warn('B98 no válido para cálculos, usando valores por defecto');
-                    return;
-                }
+                // Validaciones para los nuevos parámetros usados en el cálculo
+                if (isNaN(b98) || b98 <= 0) { this.addError('calc_b98_invalido', 'B98 no válido para empujes.'); return; }
+                if (isNaN(ka) || ka <= 0) { this.addError('calc_ka_invalido', 'Coeficiente activo (B99) no válido.'); return; }
+                if (isNaN(kp) || kp <= 0) { this.addError('calc_kp_invalido', 'Coeficiente pasivo (B100) no válido.'); return; }
+                if (isNaN(gammaSuelo) || gammaSuelo <= 0) { this.addError('calc_gamma_invalido', 'Peso específico del suelo (gs) no válido.'); return; }
+                if (isNaN(H) || H <= 0) { this.addError('calc_H_invalido', 'Altura del muro (H) no válida.'); return; }
 
-                // Ejemplo de cálculos que dependen de B98
-                // Estos son cálculos simplificados - reemplazar con fórmulas reales
 
-                // Actualizar empuje de sobrecarga basado en B98
-                const factor_sobrecarga = b98 / 2.0; // Factor simplificado
-                this.resultados.empuje_sobrecarga_terreno = 32.1 * factor_sobrecarga;
-                this.resultados.empuje_sobrecarga_horizontal = 31.6 * factor_sobrecarga;
-                this.resultados.empuje_sobrecarga_total = this.resultados.empuje_sobrecarga_terreno;
+                // ***************************************************************
+                // ** Reemplaza estos cálculos con tus fórmulas ingenieriles reales **
+                // ***************************************************************
+
+                // Empuje de sobrecarga: q_s = b98 * gamma_suelo
+                const q_s = b98 * gammaSuelo; // Presión de sobrecarga equivalente
+
+                // Presiones activas y empujes
+                // Asumiendo que 'H' es la altura total del muro desde dimensionamiento
+                this.resultados.presion_activa_min = ka * q_s; // Presión en la superficie
+                this.resultados.presion_activa_max = ka * (gammaSuelo * H + q_s); // Presión en la base
+
+                this.resultados.empuje_activo_terreno = 0.5 * ka * gammaSuelo * H * H; // Triángulo de presión
+                this.resultados.empuje_sobrecarga_terreno = ka * q_s * H; // Rectángulo de presión por sobrecarga
+
+                this.resultados.empuje_activo_horizontal = this.resultados.empuje_activo_terreno; // Simplificado
+                this.resultados.empuje_sobrecarga_horizontal = this.resultados.empuje_sobrecarga_terreno; // Simplificado
+
+                // Brazo de palanca (desde la base)
+                this.resultados.brazo_empuje_activo = H / 3;
+                this.resultados.brazo_empuje_sobrecarga = H / 2;
+
+                // Totales (asumiendo que solo estos dos contribuyen al empuje activo total)
+                this.resultados.empuje_activo_total = this.resultados.empuje_activo_terreno + this.resultados.empuje_sobrecarga_terreno;
+                this.resultados.empuje_sobrecarga_total = this.resultados.empuje_sobrecarga_terreno; // Mantener para claridad si es un sub-total
+
+                // Empuje Pasivo (asumiendo que proviene de cálculos en otro lado, o lo calculas aquí)
+                // Para fines de este ejemplo, asumiremos que empuje_pasivo_total se trae o se calcula aquí.
+                // Si kp es el coeficiente pasivo para calcularlo aquí:
+                // this.resultados.empuje_pasivo_total = 0.5 * kp * gammaSuelo * H * H;
+                // Si el valor viene de dimensionamiento, usa:
+                // const empujePasivoDeDimensionamiento = this.getValue('empuje_pasivo_calculado_en_dimensionamiento');
+                // if (empujePasivoDeDimensionamiento !== null) {
+                //     this.resultados.empuje_pasivo_total = empujePasivoDeDimensionamiento;
+                // } else {
+                //     this.addError('empuje_pasivo_faltante', 'Empuje pasivo total no disponible.');
+                // }
+
+
+                // Ejemplo de valores para los que no hay una fórmula directa en este snippet:
+                this.resultados.empuje_activo_vertical = this.resultados.empuje_activo_total * Math.sin(0); // Si hay ángulo de fricción en la pared
+                this.resultados.empuje_sobrecarga_vertical = this.resultados.empuje_sobrecarga_total * Math.sin(0);
 
                 // Recalcular empuje resultante
-                this.resultados.empuje_resultante =
-                    this.resultados.empuje_pasivo_total -
-                    this.resultados.empuje_activo_total -
-                    this.resultados.empuje_sobrecarga_total;
+                // Si 'empuje_pasivo_total' es un valor fijo de inicializarValoresDefecto o viene de otro módulo:
+                const empujePasivo = this.getValue('empuje_pasivo_total') || 0; // Usar el valor existente o 0
+                this.resultados.empuje_resultante = empujePasivo - this.resultados.empuje_activo_total;
 
-                //console.log('Empujes calculados con B98 =', b98);
+                console.log('✅ Empujes calculados y resultados actualizados.');
 
             } catch (error) {
                 console.error('Error en cálculo de empujes:', error);
-                this.addError('calculo_empujes', 'Error calculando empujes: ' + error.message);
+                this.addError('calculo_empujes_fallido', 'Error calculando empujes: ' + error.message);
             }
         },
 
         // Configuración de todos los resultados para la tabla detallada
         get todosLosResultados() {
-            return [
-                ...this.parametrosBase.map(p => ({ ...p, description: this.getDescripcion(p.key) })),
-                ...this.empujePasivoParams.map(p => ({ ...p, description: this.getDescripcion(p.key) })),
-                ...this.empujeActivoParams.map(p => ({ ...p, description: this.getDescripcion(p.key) })),
-                ...this.empujeSobrecargaParams.map(p => ({ ...p, description: this.getDescripcion(p.key) })),
-                {
-                    key: 'empuje_pasivo_total',
-                    label: 'Empuje Pasivo Total',
-                    symbol: 'Ep_total',
-                    unit: 'kN/m',
-                    description: 'Suma de todos los empujes pasivos'
-                },
-                {
-                    key: 'empuje_activo_total',
-                    label: 'Empuje Activo Total',
-                    symbol: 'Ea_total',
-                    unit: 'kN/m',
-                    description: 'Suma de todos los empujes activos'
-                },
-                {
-                    key: 'empuje_sobrecarga_total',
-                    label: 'Empuje Sobrecarga Total',
-                    symbol: 'Es_total',
-                    unit: 'kN/m',
-                    description: 'Suma de todos los empujes de sobrecarga'
-                },
-                {
-                    key: 'empuje_resultante',
-                    label: 'Empuje Resultante',
-                    symbol: 'E_result',
-                    unit: 'kN/m',
-                    description: 'Empuje neto sobre el muro'
-                }
+            const allParams = [
+                ...this.parametrosBase,
+                ...this.empujePasivoParams,
+                ...this.empujeActivoParams,
+                ...this.empujeSobrecargaParams,
+                // Agrega parámetros de carga sísmica si quieres mostrarlos aquí también
+                // ...this.cargaSismicos,
+                // ...this.cargasisicatable // Esto es un getter, necesitarías procesarlo
             ];
+
+            // Añadir los resultados totales calculados
+            const totalResults = [
+                { key: 'empuje_pasivo_total', label: 'Empuje Pasivo Total', symbol: 'Ep_total', unit: 'kN/m', description: 'Suma de todos los empujes pasivos' },
+                { key: 'empuje_activo_total', label: 'Empuje Activo Total', symbol: 'Ea_total', unit: 'kN/m', description: 'Suma de todos los empujes activos' },
+                { key: 'empuje_sobrecarga_total', label: 'Empuje Sobrecarga Total', symbol: 'Es_total', unit: 'kN/m', description: 'Suma de todos los empujes de sobrecarga' },
+                { key: 'empuje_resultante', label: 'Empuje Resultante', symbol: 'E_result', unit: 'kN/m', description: 'Empuje neto sobre el muro' }
+            ];
+
+            // Mapear todos los parámetros y resultados para la visualización
+            return [
+                ...allParams.map(p => ({
+                    key: p.key,
+                    label: p.label,
+                    symbol: p.symbol,
+                    unit: p.unit,
+                    description: this.getDescripcion(p.key) // Obtener la descripción centralizada
+                })),
+                ...totalResults
+            ].map(item => ({
+                ...item,
+                value: this.getValue(item.key) // Usa getValue para obtener el valor
+            }));
         },
 
-        // Métodos utilitarios mejorados
+
         getB98Value() {
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B98 !== undefined) {
-                return this.predimData.resultados.B98;
-            }
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B99 !== undefined) {
-                return this.predimData.resultados.B99;
-            }
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B100 !== undefined) {
-                return this.predimData.resultados.B100;
-            }
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B101 !== undefined) {
-                return this.predimData.resultados.B101;
-            }
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B103 !== undefined) {
-                return this.predimData.resultados.B103;
-            }
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B104 !== undefined) {
-                return this.predimData.resultados.B104;
-            }
-            return 0;
-        },
-
-        getValue(key) {
-            // Primero buscar en resultados propios
-            if (this.resultados[key] !== undefined) {
-                return this.resultados[key];
-            }
-
-            // Luego buscar en datos del predimensionamiento
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados[key] !== undefined) {
-                return this.predimData.resultados[key];
-            }
-
-            return null;
+            // Este método ahora es redundante si usas `getValue('B98')` directamente.
+            // `getValue` ya busca en `predimData.resultados` que es de donde esperas `B98`.
+            // Lo mantengo por compatibilidad, pero considera removerlo y usar `this.getValue(key)` siempre.
+            return this.getValue('B98'); // Re-dirigimos a la función más genérica
         },
 
         getParameterValue(key, unit) {
@@ -615,37 +676,71 @@ function initCargasModule() {
                 'B99': 'Coeficiente de empuje activo de Rankine',
                 'B100': 'Coeficiente de empuje pasivo de Rankine',
                 'B101': 'Coeficiente de empuje en reposo',
-                'B112': 'Cohesión equivalente del suelo',
-                'E74': 'Desplazamiento horizontal del talud',
-                'E79': 'Altura efectiva del muro',
-                'N78': 'Empuje pasivo cohesivo en el tercio superior',
-                'N79': 'Empuje pasivo cohesivo en el tercio medio',
-                'N80': 'Empuje pasivo cohesivo en el tercio inferior',
-                'S78': 'Empuje pasivo del terreno en el tercio superior',
-                'S79': 'Empuje pasivo del terreno en el tercio medio',
-                'S80': 'Empuje pasivo del terreno en el tercio inferior',
-                'T78': 'Brazo de palanca para empuje superior',
-                'T79': 'Brazo de palanca para empuje medio',
-                'T80': 'Brazo de palanca para empuje inferior',
-                'empuje_activo_terreno': 'Empuje activo total del terreno',
-                'empuje_activo_vertical': 'Componente vertical del empuje activo',
-                'empuje_activo_horizontal': 'Componente horizontal del empuje activo',
-                'presion_activa_min': 'Presión activa mínima en la superficie',
-                'presion_activa_max': 'Presión activa máxima en la base',
-                'brazo_empuje_activo': 'Brazo de palanca del empuje activo',
-                'empuje_sobrecarga_terreno': 'Empuje de sobrecarga del terreno',
-                'empuje_sobrecarga_vertical': 'Componente vertical del empuje de sobrecarga',
-                'empuje_sobrecarga_horizontal': 'Componente horizontal del empuje de sobrecarga',
-                'presion_sobrecarga_min': 'Presión de sobrecarga mínima',
-                'presion_sobrecarga_max': 'Presión de sobrecarga máxima',
-                'brazo_empuje_sobrecarga': 'Brazo de palanca del empuje de sobrecarga'
+                'B103': 'Empuje cohesivo superior del terreno',
+                'B104': 'Presión en cota cero del empuje pasivo',
+                'B105': 'Presión máxima en pantalla del muro (empuje pasivo)',
+                'B106': 'Presión máxima en cimiento (empuje pasivo)',
+                'B107': 'Presión en cota final del muro (empuje pasivo)',
+                'B108': 'Empuje total del terreno (pasivo)',
+                'B109': 'Componente vertical del empuje del terreno (pasivo)',
+                'B110': 'Componente horizontal del empuje del terreno (pasivo)',
+                'B112': 'Presión máxima en cota final del muro (empuje pasivo)',
+                'B113': 'Empuje total del terreno (pasivo)',
+                'B114': 'Componente vertical del empuje del terreno (pasivo)',
+                'B115': 'Componente horizontal del empuje del terreno (pasivo)',
+                'B119': 'Altura total de cálculo (empuje activo)',
+                'B120': 'Presión en cota cero (empuje activo)',
+                'B121': 'Presión en cota final del muro (empuje activo)',
+                'B122': 'Presión máxima en pantalla del muro (empuje activo)',
+                'B123': 'Empuje total del terreno (activo)',
+                'B124': 'Componente vertical del empuje del terreno (activo)',
+                'B125': 'Componente horizontal del empuje del terreno (activo)',
+                'B127': 'Presión máxima en cota final del muro (empuje activo)',
+                'B128': 'Empuje total del terreno (activo)',
+                'B129': 'Componente vertical del empuje del terreno (activo)',
+                'B130': 'Componente horizontal del empuje del terreno (activo)',
+                'B133': 'Presión en cota cero (empuje sobrecarga)',
+                'B134': 'Presión en cota final del muro (empuje sobrecarga)',
+                'B135': 'Presión máxima en pantalla del muro (empuje sobrecarga)',
+                'B136': 'Empuje total del terreno (sobrecarga)',
+                'B137': 'Componente vertical del empuje del terreno (sobrecarga)',
+                'B138': 'Componente horizontal del empuje del terreno (sobrecarga)',
+                // Descripciones para Cargas Sísmicas
+                'C144': 'Coeficiente sísmico horizontal Kh',
+                'C145': 'Coeficiente sísmico vertical Kv',
+                'C153': 'Coeficiente de empuje activo sísmico Kae',
+                'B154': 'Peso específico del suelo gs',
+                'B155': 'Altura del muro H',
+                'B156': 'Coeficiente Kv (sísmico vertical)',
+                'C157': 'Empuje sísmico Eae',
+                'B158': 'Coeficiente sísmico horizontal Kah',
+                'C159': 'Empuje activo Ea',
+                'C160': 'Incremento de empuje sísmico DEae',
+                'C162': 'Brazo de palanca sísmico',
+                'C163': 'Momento por empuje sísmico Mae',
+                // Agrega descripciones para tus resultados calculados directamente en `resultados`
+                'empuje_activo_terreno': 'Empuje activo total del terreno (calculado)',
+                'empuje_activo_vertical': 'Componente vertical del empuje activo (calculado)',
+                'empuje_activo_horizontal': 'Componente horizontal del empuje activo (calculado)',
+                'presion_activa_min': 'Presión activa mínima en la superficie (calculada)',
+                'presion_activa_max': 'Presión activa máxima en la base (calculada)',
+                'brazo_empuje_activo': 'Brazo de palanca del empuje activo (calculado)',
+                'empuje_sobrecarga_terreno': 'Empuje de sobrecarga del terreno (calculado)',
+                'empuje_sobrecarga_vertical': 'Componente vertical del empuje de sobrecarga (calculado)',
+                'empuje_sobrecarga_horizontal': 'Componente horizontal del empuje de sobrecarga (calculado)',
+                'presion_sobrecarga_min': 'Presión de sobrecarga mínima (calculada)',
+                'presion_sobrecarga_max': 'Presión de sobrecarga máxima (calculada)',
+                'brazo_empuje_sobrecarga': 'Brazo de palanca del empuje de sobrecarga (calculado)',
+                'empuje_pasivo_total': 'Empuje pasivo total (calculado o recibido)',
+                'empuje_activo_total': 'Empuje activo total (calculado)',
+                'empuje_resultante': 'Empuje resultante neto (calculado)'
             };
-            return descripciones[key] || 'Parámetro calculado';
+            return descripciones[key] || 'Parámetro no especificado';
         },
 
         addError(id, message) {
             if (!this.errors.find(e => e.id === id)) {
-                this.errors.push({ id, message });
+                this.errors.push({ id, message, timestamp: new Date().toISOString() });
             }
         },
 
@@ -655,17 +750,14 @@ function initCargasModule() {
 
         sendDataCargas() {
             const data = {
-                inputValues: {},
+                inputValues: {}, // Si el módulo 'cargas' tiene inputs propios, los pondrías aquí
                 resultados: { ...this.resultados },
-                errors: [...this.errors]
+                errors: [...this.errors],
+                isCalculated: this.errors.length === 0 // Un indicador si el cálculo fue exitoso
             };
 
-            // Incluir B98 en los resultados para otros módulos
-            if (this.predimData && this.predimData.resultados && this.predimData.resultados.B98 !== undefined) {
-                data.resultados.B98 = this.predimData.resultados.B98;
-            }
-
-            document.dispatchEvent(new CustomEvent('cargas-updated', { detail: data }));
+            document.dispatchEvent(new CustomEvent('cargas-data-ready', { detail: data }));
+            console.log('📤 Evento "cargas-data-ready" disparado con los resultados actuales.');
         },
 
         formatValue(value) {
@@ -684,25 +776,39 @@ function initCargasModule() {
         validarDatos() {
             const errores = [];
 
+            // Validar que dimensionamiento esté calculado
+            if (!this.dimensionamientoData || !this.dimensionamientoData.isCalculated) {
+                errores.push('El módulo de Dimensionamiento debe estar calculado para proceder con Cargas.');
+            }
+
             // Validar B98
-            const b98 = this.getB98Value();
-            if (!b98 || b98 <= 0) {
-                errores.push('B98 (altura de sobrecarga) debe ser mayor que 0');
+            const b98 = this.getValue('B98');
+            if (b98 === null || typeof b98 !== 'number' || isNaN(b98) || b98 <= 0) {
+                errores.push('B98 (altura de sobrecarga) debe ser un número válido mayor que 0.');
             }
 
-            // Validar coeficientes
-            if (this.resultados.B99 && (this.resultados.B99 <= 0 || this.resultados.B99 >= 1)) {
-                errores.push('Coeficiente activo (ka) debe estar entre 0 y 1');
+            // Validar coeficientes (usando getValue para mayor flexibilidad)
+            const ka = this.getValue('B99');
+            if (ka === null || typeof ka !== 'number' || isNaN(ka) || ka <= 0 || ka >= 1) {
+                errores.push('Coeficiente activo (B99) debe ser un número entre 0 y 1.');
             }
 
-            if (this.resultados.B100 && this.resultados.B100 <= 1) {
-                errores.push('Coeficiente pasivo (kp) debe ser mayor que 1');
+            const kp = this.getValue('B100');
+            if (kp === null || typeof kp !== 'number' || isNaN(kp) || kp <= 1) {
+                errores.push('Coeficiente pasivo (B100) debe ser un número mayor que 1.');
             }
 
-            // Validar empujes
-            if (this.resultados.empuje_pasivo_total && this.resultados.empuje_pasivo_total <= 0) {
-                errores.push('Empuje pasivo total debe ser positivo');
+            // Validar si los principales empujes tienen valores numéricos esperados
+            if (typeof this.resultados.empuje_activo_total !== 'number' || isNaN(this.resultados.empuje_activo_total)) {
+                errores.push('Empuje activo total no es un número válido.');
             }
+            if (typeof this.resultados.empuje_pasivo_total !== 'number' || isNaN(this.resultados.empuje_pasivo_total)) {
+                errores.push('Empuje pasivo total no es un número válido.');
+            }
+
+
+            // Aquí agregarías más validaciones específicas de tus cálculos de cargas.
+            // Por ejemplo, que el empuje resultante tenga sentido, etc.
 
             return errores;
         },
@@ -712,22 +818,24 @@ function initCargasModule() {
             const datos = {
                 timestamp: new Date().toISOString(),
                 modulo: 'cargas_empuje',
+                // Incluimos todos los datos de los que dependemos y nuestros resultados
                 predimensionamiento: this.predimData,
+                dimensionamiento: this.dimensionamientoData, // Aseguramos que se exporten los datos de dimensionamiento
                 resultados: this.resultados,
                 errores: this.errors
             };
-
             return JSON.stringify(datos, null, 2);
         },
 
         // Método para debug
         mostrarDebugInfo() {
             console.group('Debug Info - Cargas de Empuje');
-            //console.log('Datos de predimensionamiento:', this.predimData);
-            //console.log('Resultados calculados:', this.resultados);
-            //console.log('Errores:', this.errors);
-            //console.log('B98 actual:', this.getB98Value());
-            //console.log('Validaciones:', this.validarDatos());
+            console.log('Datos de predimensionamiento (predimData):', this.predimData);
+            console.log('Datos de dimensionamiento (dimensionamientoData):', this.dimensionamientoData);
+            console.log('Resultados propios de Cargas (resultados):', this.resultados);
+            console.log('Errores actuales:', this.errors);
+            console.log('Valor de B98 (usando getValue):', this.getValue('B98'));
+            console.log('Validaciones pendientes:', this.validarDatos());
             console.groupEnd();
         }
     }));

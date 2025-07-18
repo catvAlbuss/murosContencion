@@ -189,6 +189,146 @@ class PuntaCalculator {
     }
 }
 
+class TalonCalculator {
+    calcular(datos, predimData) {
+        const resultados = { datospant: {}, corte: {}, flexion: {} };
+        const errors = [];
+
+        try {
+            const materiales = predimData?.materiales || {};
+            const resultadosPredim = predimData?.resultados || {};
+            const { Mu, Vu, b, t, d, mu } = datos;
+
+            //inputs tipo number
+            const A325 = 0
+            const A329 = 0
+            const B336 = 0
+            const B349 = 0
+            const B364 = 0
+            //--- Aceros reutilizables para los input tipo select
+
+            const B295 = 76.84;
+            const B296 = 38.84;
+            const B297 = materiales.B8 || datos.Fy;
+            const B298 = materiales.B7 || datos.Fc;
+            const B299 = 100;
+            const B300 = 0.75 * 100;
+            const B301 = B300 - 10;
+            const B302 = B295 * 100000;
+
+            resultados.datospant = {
+                Mu: B295,
+                Vu: B296,
+                Fy: B297,
+                Fc: B298,
+                b: B299,
+                t: B300,
+                d: B301,
+                mu: B302,
+            };
+            //**CORTES */
+            const C305 = B301;
+            const C306 = B296;
+            const C307 = 0.53 * C305 * B299 * Math.pow(B298, 0.5) / 1000;
+            const C308 = C307 * 0.85;
+            const C309 = C306 / C308 * 100;
+            const C310 = (C308 > C306) ? "OK" : "ESTA MAL";
+            resultados.corte = { C305, C306, C307, C308, C309, C310 };
+            /**FLEXION -cuantias*/
+            const B318 = 0.002;
+            const B319 = 0.0018;
+
+            const C318 = B318 * B299 * B301;
+            const C319 = B319 * B299 * B301;
+
+            const B320 = B301 - Math.pow(Math.pow(B301, 2) - 2 * B302 / (0.85 * 0.9 * B298 * B299), 0.5);
+            const B321 = B302 / (0.9 * B297 * (B301 - B320 / 2));
+            const B322 = Math.max(B321, C319);
+            /**FLEXION -DISTIBUCION DEL ACERO LONGITUDINAL PRINCIPAL*/
+            // const C326 = aceros * A325;
+            // const E325 = C326 * 100 / B322; //flexion
+            resultados.flexion = { B318, B319, C318, C319, B320, B321, B322 }
+        } catch (error) {
+            errors.push({
+                id: 'pantalla-calculo',
+                message: `Error en cálculo de Pantalla: ${error.message}`
+            });
+        }
+
+        return { resultados, errors };
+    }
+}
+
+class KeyCalculator {
+    calcular(datos, predimData) {
+        const resultados = { datospant: {}, corte: {}, flexion: {} };
+        const errors = [];
+
+        try {
+            const materiales = predimData?.materiales || {};
+            const resultadosPredim = predimData?.resultados || {};
+            const { Mu, Vu, b, t, d, mu } = datos;
+
+            //inputs tipo number
+            const A325 = 0
+            const A329 = 0
+            const B336 = 0
+            const B349 = 0
+            const B364 = 0
+            //--- Aceros reutilizables para los input tipo select
+
+            const B295 = 5.15;
+            const B296 = 10.10;
+            const B297 = materiales.B8 || datos.Fy;
+            const B298 = materiales.B7 || datos.Fc;
+            const B299 = 100;
+            const B300 = 0.9 * 100;
+            const B301 = B300 - 10;
+            const B302 = B295 * 100000;
+
+            resultados.datospant = {
+                Mu: B295,
+                Vu: B296,
+                Fy: B297,
+                Fc: B298,
+                b: B299,
+                t: B300,
+                d: B301,
+                mu: B302,
+            };
+            //**CORTES */
+            const C305 = B301;
+            const C306 = B296;
+            const C307 = 0.53 * C305 * B299 * Math.pow(B298, 0.5) / 1000;
+            const C308 = C307 * 0.85;
+            const C309 = C306 / C308 * 100;
+            const C310 = (C308 > C306) ? "OK" : "ESTA MAL";
+            resultados.corte = { C305, C306, C307, C308, C309, C310 };
+            /**FLEXION -cuantias*/
+            const B318 = 0.002;
+            const B319 = 0.0018;
+
+            const C318 = B318 * B299 * B301;
+            const C319 = B319 * B299 * B301;
+
+            const B320 = B301 - Math.pow(Math.pow(B301, 2) - 2 * B302 / (0.85 * 0.9 * B298 * B299), 0.5);
+            const B321 = B302 / (0.9 * B297 * (B301 - B320 / 2));
+            const B322 = Math.max(B321, C318);
+            /**FLEXION -DISTIBUCION DEL ACERO LONGITUDINAL PRINCIPAL*/
+            // const C326 = aceros * A325;
+            // const E325 = C326 * 100 / B322; //flexion
+            resultados.flexion = { B318, B319, C318, C319, B320, B321, B322 }
+        } catch (error) {
+            errors.push({
+                id: 'pantalla-calculo',
+                message: `Error en cálculo de Pantalla: ${error.message}`
+            });
+        }
+
+        return { resultados, errors };
+    }
+}
+
 let resultados = {};
 
 const AceroManager = {
@@ -212,8 +352,8 @@ const AceroManager = {
         const valores = {
             'pantalla': 0.333333333333333,
             'punta': 0.50,
-            'talon': 0.333333333333333,
-            'key': 0.333333333333333
+            'talon': 0.50,
+            'key': 0.50
         };
         return valores[tipoElemento] || 0.333333333333333;
     },
@@ -246,6 +386,10 @@ const AceroManager = {
             valorReferencia = rminareas;
         } else if (elemento === 'punta') {
             valorReferencia = rminarea;
+        } else if (elemento === 'talon') {
+            valorReferencia = rminarea;
+        } else if (elemento === 'key') {
+            valorReferencia = rminarea;
         } else {
             valorReferencia = rminareas;
         }
@@ -258,6 +402,10 @@ const AceroManager = {
             valorReferencia = rminarea;
         } else if (elemento === 'punta') {
             valorReferencia = rminareas;
+        } else if (elemento === 'talon') {
+            valorReferencia = rminarea;
+        } else if (elemento === 'key') {
+            valorReferencia = rminarea;
         } else {
             valorReferencia = rminareas;
         }
@@ -510,7 +658,7 @@ function createElementoModule(tipo, calculatorInstance, globalCalculator) {
             datos: false,
             corte: false,
             flexion: false,
-            acero: true
+            acero: false
         },
 
         // Configuraciones de acero reutilizables con sincronización
@@ -669,14 +817,15 @@ function createElementoModule(tipo, calculatorInstance, globalCalculator) {
                     b: () => 100
                 },
                 talon: {
-                    t: () => resultadosPredim.peralte_zapata * 100,
-                    d: () => this.datos.t - 7.5,
-                    b: () => resultadosPredim.ancho_zapata * 100
+                    //t: () => resultadosPredim.peralte_zapata * 100,
+                    t: () => 0.75 * 100,
+                    d: () => this.datos.t - 10,
+                    b: () => 100
                 },
                 key: {
-                    t: () => resultadosPredim.altura_key * 100,
-                    d: () => this.datos.t - 4,
-                    b: () => resultadosPredim.ancho_key * 100
+                    t: () => 0.9 * 100,
+                    d: () => this.datos.t - 10,
+                    b: () => 100
                 }
             };
 
@@ -699,8 +848,8 @@ function createElementoModule(tipo, calculatorInstance, globalCalculator) {
             const defaults = {
                 pantalla: { Mu: 101.73, Vu: 35.9, Fy: 4200, Fc: 21, b: 100, t: 90, d: 86, mu: 10 },
                 punta: { Mu: 52.39, Vu: 38.03, Fy: 4200, Fc: 21, b: 100, t: 60, d: 52.5, mu: 10 },
-                talon: { Mu: 45.80, Vu: 28.30, Fy: 4200, Fc: 21, b: 100, t: 75, d: 67.5, mu: 10 },
-                key: { Mu: 18.20, Vu: 12.10, Fy: 4200, Fc: 21, b: 60, t: 40, d: 36, mu: 10 }
+                talon: { Mu: 76.84, Vu: 37.54, Fy: 4200, Fc: 21, b: 100, t: 75, d: 67, mu: 10 },
+                key: { Mu: 5.15, Vu: 10.10, Fy: 4200, Fc: 21, b: 100, t: 90, d: 80, mu: 10 }
             };
             return defaults[this.tipo] || defaults.pantalla;
         },
@@ -826,6 +975,8 @@ function initConcretoArmadoModule() {
         // Registrar calculadoras específicas
         globalConcretoArmadoCalculator.registrarElemento('pantalla', new PantallaCalculator());
         globalConcretoArmadoCalculator.registrarElemento('punta', new PuntaCalculator());
+        globalConcretoArmadoCalculator.registrarElemento('talon', new TalonCalculator());
+        globalConcretoArmadoCalculator.registrarElemento('key', new KeyCalculator());
     }
 
     // Asociar módulos de Alpine.js
@@ -834,6 +985,12 @@ function initConcretoArmadoModule() {
         globalConcretoArmadoCalculator));
     Alpine.data('puntaModule', createElementoModule('punta',
         globalConcretoArmadoCalculator.getElementoCalculator('punta'),
+        globalConcretoArmadoCalculator));
+    Alpine.data('talonModule', createElementoModule('talon',
+        globalConcretoArmadoCalculator.getElementoCalculator('talon'),
+        globalConcretoArmadoCalculator));
+    Alpine.data('keyModule', createElementoModule('key',
+        globalConcretoArmadoCalculator.getElementoCalculator('key'),
         globalConcretoArmadoCalculator));
 
     // Generar HTML
@@ -878,13 +1035,13 @@ function generateMainHTML() {
                         </div>
                         
                         <!-- Módulo Talón (cuando esté disponible) -->
-                        <div class="elemento-placeholder">
-                            ${generatePlaceholderHTML('TALÓN', 'bg-orange-600')}
+                        <div x-data="talonModule()" x-init="init()" class="elemento-placeholder">
+                            ${generateElementoHTML('talon', 'TALÓN', 'bg-orange-600')}
                         </div>
                         
                         <!-- Módulo Dentellón (cuando esté disponible) -->
-                        <div class="elemento-placeholder">
-                            ${generatePlaceholderHTML('DENTELLÓN', 'bg-purple-600')}
+                        <div x-data="keyModule()" x-init="init()" class="elemento-placeholder">
+                            ${generateElementoHTML('key', 'DENTELLÓN', 'bg-purple-600')}
                         </div>
                     </div>
                 </div>
@@ -895,7 +1052,6 @@ function generateMainHTML() {
 
 // Función para generar HTML de cada elemento estructural
 function generateElementoHTML(tipo, titulo, colorHeader) {
-    console.log(`Generando HTML para el elemento: ${tipo}`);
     return `
         <div class="bg-white border border-gray-300 rounded-lg shadow-md overflow-hidden">
             <!-- Header del elemento -->
@@ -1445,8 +1601,6 @@ function generateCaraLibre() {
 }
 // Apartado: Recorte de Refuerzo Longitudinal Principal (solo para pantalla, preparado para punta)
 function generateRecorteRefuerzoLongitudinalPrincipal(tipo) {
-    console.log("Generando HTML para el elemento:", tipo);
-
     if (tipo !== 'pantalla') return ''; // Mostrar solo para tipo 'pantalla'
 
     return `

@@ -12,6 +12,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -19,12 +21,16 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             background: white;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
         }
 
         .cuaderno {
             position: relative;
             background-color: white;
             z-index: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
         }
 
         .cuaderno::before {
@@ -46,11 +52,15 @@
         .cuaderno>* {
             position: relative;
             z-index: 2;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
         }
     </style>
+
 </head>
 
 <body class="bg-gray-50 min-h-screen">
+    <div id="sweetalert-container"></div>
     <div x-data="mainSystem" class="w-full p-6">
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-md mb-2">
@@ -115,18 +125,30 @@
             <div x-show="activeTab === 'concretoArmado'" x-transition>
                 <div id="concretoArmado-content"></div>
             </div>
+
+            <!-- Dibujo Tab -->
+            <div x-show="activeTab === 'dibujo'" x-transition>
+                <div id="dibujo-content"></div>
+            </div>
+
+            <!-- Metrado Tab -->
+            <div x-show="activeTab === 'metrado'" x-transition>
+                <div id="metrado-content"></div>
+            </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="js/main.js"></script>
-    <script type="module" src="js/components/predimensionamiento.js"></script>
-    <script type="module" src="js/components/dimensionamiento.js"></script>
-    <script type="module" src="js/components/cargas.js"></script>
-    <script type="module" src="js/components/verificaciones.js"></script>
+    <!-- <script type="module" src="js/components/predimensionamiento.js"></script>
+    <script type="module" src="js/components/dimensionamiento.js"></script> -->
+    <!-- <script type="module" src="js/components/cargas.js"></script> -->
+    <!-- <script type="module" src="js/components/verificaciones.js"></script>
     <script type="module" src="js/components/esquemaCargas.js"></script>
     <script type="module" src="./js/components/analisisEstructural.js"></script>
     <script type="module" src="./js/components/desingConcretoArmado.js"></script>
+    <script type="module" src="./js/components/dibujo.js"></script>
+    <script type="module" src="./js/components/metrados.js"></script> -->
 </body>
 
 </html>
